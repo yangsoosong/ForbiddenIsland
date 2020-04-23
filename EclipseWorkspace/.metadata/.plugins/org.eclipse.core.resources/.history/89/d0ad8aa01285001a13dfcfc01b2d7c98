@@ -1,0 +1,374 @@
+// Assignment 6
+// Harmon Thomas
+// tharmon
+// Song Yangsoo
+// songyang25
+
+
+import tester.*;
+
+// to compare objects of type t
+interface IComparator<T> {
+    // Returns a negative number if t1 comes before t2 in this ordering
+    // Returns zero              if t1 is the same as t2 in this ordering
+    // Returns a positive number if t1 comes after t2 in this ordering
+    int compare(T t1, T t2);
+}
+
+//a function object that compares Strings lexicographically
+class StringLexCompGen implements IComparator<String> {
+    // returns true if string s1 comes before string s2 lexicographically
+    public int compare(String s1, String s2) {
+        return s1.compareTo(s2);
+    }
+}
+
+//a function object that compares their length from shortest to longest
+class StringLengthCompGen implements IComparator<String> {
+    // returns true if string s1 comes before string s2 
+    // when sorted in a list by length from shortest to longest
+    public int compare(String s1, String s2) {
+        if  (s1.length() < s2.length()) {
+            return -1;
+        }
+        else if (s1.length() == s2.length()) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+}
+
+
+// to represent a list of Ts
+interface IList<T> {
+
+    // insert T into this sorted list according to comp
+    IList<T> insert(T t, IComparator<T> comp);
+
+    // sort this list of T by the given comp
+    IList<T> sort(IComparator<T> comp);
+    
+    // is this list of T sorted by the given comparator
+    boolean isSorted(IComparator<T> comp);
+    
+    // helper method for isSorted
+    boolean isSortedHelper(IComparator<T> comp, T t);
+    
+    // is this list of T the same as that list of T?
+    boolean sameList(IList<T> that);
+    
+    // is this Empty list of T the same as that EmptyList?
+    boolean sameEmptyList(Empty<T> that);
+    
+    // is this Cons list of T the same as that ConsList?
+    boolean sameConsList(Cons<T> that);
+}
+
+// to represent an empty list of T
+class Empty<T> implements IList<T> {
+    
+    // insert the item into this sorted list
+    public IList<T> insert(T t, IComparator<T> comp) {
+        return new Cons<T>(t, this);
+    }
+
+    // sort this list by the given comparator
+    public IList<T> sort(IComparator<T> comp) {
+        return this;
+    }
+    
+    // is this list sorted by the given comparator?
+    public boolean isSorted(IComparator<T> comp) {
+        return true;
+    }
+    
+    // helper method for isSorted
+    public boolean isSortedHelper(IComparator<T> comp, T t) {
+        return true;
+    }
+
+    // is this list the same as that list?
+    public boolean sameList(IList<T> that) {
+        return that.sameEmptyList(this);
+    }
+    
+    // is this list the same as that empty list?
+    public boolean sameEmptyList(Empty<T> that) {
+        return true;
+    }
+    
+    // is this list the same as that cons list?
+    public boolean sameConsList(Cons<T> that) {
+        return false;
+    }
+    
+}
+
+// to represent a cons list of T
+class Cons<T> implements IList<T> {
+    T first;
+    IList<T> rest;
+
+    Cons(T first, IList<T> rest) {
+        this.first = first;
+        this.rest = rest;
+    }
+
+    // insert the item into this sorted list, including dupes
+    public IList<T> insert(T t, IComparator<T> comp) {
+        if (comp.compare(t, this.first) <= 0) {
+            return new Cons<T>(t, this);
+        }
+        else {
+            return new Cons<T>(this.first, this.rest.insert(t, comp));
+        }
+    }
+
+    // sort this list of T by the given comp
+    public IList<T> sort(IComparator<T> comp) {
+        return this.rest.sort(comp).insert(this.first, comp);
+    }
+    
+    // is this list of T sorted by the given comparator?
+    public boolean isSorted(IComparator<T> comp) {
+        return this.rest.isSortedHelper(comp, this.first) &&
+                this.rest.isSorted(comp);
+    }
+    
+    // helper method for isSorted
+    public boolean isSortedHelper(IComparator<T> comp, T t) {
+        return comp.compare(t, this.first) <= 0;
+    }
+    
+    // is this list of T the same as that list?
+    public boolean sameList(IList<T> that) {
+        return that.sameConsList(this);
+    }
+    
+    // is this list of T the same as that empty list?
+    public boolean sameEmptyList(Empty<T> that) {
+        return false;
+    }
+    
+    // is this list of T the same as that cons list?
+    public boolean sameConsList(Cons<T> that) {
+        return this.first.equals(that.first) &&
+                this.rest.sameList(that.rest);
+    }
+
+}
+
+
+//to represent examples for lists of strings
+class ExamplesStringsGen {
+
+    IComparator<String> lex = new StringLexCompGen();
+    IComparator<String> len = new StringLengthCompGen();
+    
+    IList<String> mtList = new Empty<String>();
+    
+    
+    
+    IList<String> mary = new Cons<String>("Mary ",
+            new Cons<String>("had ",
+                    new Cons<String>("a ",
+                            new Cons<String>("little ",
+                                    new Cons<String>("lamb.", this.mtList)))));
+    IList<String> mary2 = new Cons<String>("Mary ",
+            new Cons<String>("had ",
+                    new Cons<String>("a ",
+                            new Cons<String>("little ",
+                                    new Cons<String>("lamb.", 
+                                            new Cons<String>("zoo", this.mtList))))));
+    IList<String> mary2length = new Cons<String>("zoo",
+            new Cons<String>("Mary ",
+                    new Cons<String>("had ",
+                            new Cons<String>("a ",
+                                    new Cons<String>("little ",
+                                            new Cons<String>("lamb.", this.mtList))))));
+    IList<String> maryLexSorted = new Cons<String>("a ",
+            new Cons<String>("had ",
+                    new Cons<String>("lamb.",
+                            new Cons<String>("little ",
+                                    new Cons<String>("Mary ", this.mtList)))));
+    IList<String> maryLenSorted = new Cons<String>("a ",
+            new Cons<String>("had ",
+                    new Cons<String>("Mary ",
+                            new Cons<String>("lamb.",
+                                    new Cons<String>("little ", this.mtList)))));
+
+    Cons<String> los1 = new Cons<String>("tom", this.mtList);
+    Cons<String> los2 = new Cons<String>("yangsoo", los1);
+
+    IList<String> los3 = new Cons<String>("On a",
+            new Cons<String>("beach in",
+                    new Cons<String>("hawaii", this.mtList)));
+
+    IList<String> los3LenSorted = new Cons<String>("On a",
+            new Cons<String>("hawaii",
+                    new Cons<String>("beach in", this.mtList)));
+
+    IList<String> los3insertLen = new Cons<String>("On a",
+            new Cons<String>("tomas",
+                    new Cons<String>("beach in",
+                            new Cons<String>("hawaii", this.mtList))));
+
+
+    IList<String> los3Reversed = new Cons<String>("hawaii",
+            new Cons<String>("beach in",
+                    new Cons<String>("On a", this.mtList)));
+
+    IList<String> los4 = new Cons<String>("alpha", this.mtList);
+    IList<String> los5 = new Cons<String>("alpha", mary);
+
+    IList<String> losInterLeaved = new Cons<String>("On a",
+            new Cons<String>("yangsoo",
+                    new Cons<String>("beach in",
+                            new Cons<String>("tom",
+                                    new Cons<String>("hawaii", this.mtList)))));
+
+    IList<String> los6 = new Cons<String>("alpha",
+            new Cons<String>("beta",
+                    new Cons<String>("alpha", this.mtList)));
+    IList<String> los7 = new Cons<String>("alpha",
+            new Cons<String>("beta",
+                    new Cons<String>("gamma", this.mtList)));
+
+    IList<String> los8 = new Cons<String>("fun",
+            new Cons<String>("fundies", this.mtList));
+
+    IList<String> los9 = new Cons<String>("fundies",
+            new Cons<String>("fun", this.mtList));
+
+    IList<String> los10 = new Cons<String>("gamma",
+            new Cons<String>("beta",
+                    new Cons<String>("alpha", this.mtList)));
+    IList<String> los11 = new Cons<String>("alpha",
+            new Cons<String>("alpha",
+                    new Cons<String>("alpha",
+                            new Cons<String>("beta",
+                                    new Cons<String>("beta",
+                                            new Cons<String>("gamma", this.mtList))))));
+    IList<String> los12 = new Cons<String>("fun",
+            new Cons<String>("fundies",
+                    new Cons<String>("tom",
+                            new Cons<String>("yangsoo", this.mtList))));
+
+    IList<String> los13 = new Cons<String>("beta",
+            new Cons<String>("beta",
+                    new Cons<String>("alpha",
+                            new Cons<String>("alpha",
+                                    new Cons<String>("alpha",
+                                            new Cons<String>("gamma", this.mtList))))));
+
+    IList<String> los14 = new Cons<String>("tom",
+            new Cons<String>("fun",
+                    new Cons<String>("yangsoo",
+                            new Cons<String>("fundies", this.mtList))));
+
+    String string1 = "aa";
+    String string2 = "bb";
+    String string3 = "cc";
+
+    String string4 = "a";
+    String string5 = "aaa";
+
+    // tests comeBefore(String s1, String s2) for StringLexComp function object
+//  boolean testStringLexComp(Tester t) {
+//     return 
+//        t.checkExpect(new Empty<String>().isSortedHelp("hello", new StringLexCompGen()), true);
+//                
+////       t.checkExpect(new StringLexComp().comesBefore(this.string1, this.string2), true) &&
+////       t.checkExpect(new StringLexComp().comesBefore(this.string3, this.string1), false) &&
+////       t.checkExpect(new StringLexComp().comesBefore(this.string1, this.string1), true);
+//    }
+
+    // tests comesBefore(String s1, String s2) for StringLengthComp function object
+    boolean testStringLengthComp(Tester t) {
+        return t.checkExpect(new StringLengthComp().comesBefore(
+                this.string4, this.string1), true) &&
+                t.checkExpect(new StringLengthComp().comesBefore(
+                        this.string5, this.string4), false) &&
+                t.checkExpect(new StringLengthComp().comesBefore(
+                        this.string1, this.string1), true);
+    }
+
+
+    // tests insert(String s1, IStringsCompare compare)
+    boolean testInsert(Tester t) {
+        return t.checkExpect(this.mtList.insert("alpha", new StringLexCompGen()), this.los4) &&
+                t.checkExpect(this.mary.insert("alpha", new StringLexCompGen()), this.los5) &&
+                t.checkExpect(this.mary.insert("zoo", new StringLexCompGen()), this.mary2) &&
+
+                t.checkExpect(this.mtList.insert("alpha", new StringLengthCompGen()), this.los4) &&
+                t.checkExpect(this.mary.insert("alpha", new StringLengthCompGen()), this.los5) &&
+                t.checkExpect(this.mary.insert("zoo", new StringLengthCompGen()), 
+                        this.mary2length) &&
+                t.checkExpect(this.los3.insert("tomas", new StringLengthCompGen()),
+                        this.los3insertLen);
+    }
+
+
+    // tests sort(IStringsCompare compare)
+    boolean testSort(Tester t) {
+        return t.checkExpect(this.mtList.sort(new StringLexCompGen()), this.mtList) &&
+                t.checkExpect(this.mary.sort(new StringLexCompGen()), this.maryLexSorted) &&
+                t.checkExpect(this.los8.sort(new StringLexCompGen()), this.los8) &&
+
+                t.checkExpect(this.mtList.sort(new StringLengthCompGen()), this.mtList) &&
+                t.checkExpect(this.mary.sort(new StringLengthCompGen()), this.maryLenSorted) &&
+                t.checkExpect(this.los3.sort(new StringLengthCompGen()), this.los3LenSorted);
+    }
+
+
+    // tests isSortedHelper(IStringsCompare compare, String s1) for both function objects
+    boolean testIsSortedHelper(Tester t) {
+        return t.checkExpect(this.mtList.isSortedHelper(new StringLexCompGen(), ""), true) &&
+                t.checkExpect(this.los2.isSortedHelper(new StringLexCompGen(), "tom"), true) &&
+                t.checkExpect(this.los3.isSortedHelper(new StringLexCompGen(), "zeta"), false) &&
+
+                t.checkExpect(this.mtList.isSortedHelper(new StringLengthCompGen(), ""), true) &&
+                t.checkExpect(this.los2.isSortedHelper(new StringLengthCompGen(), "tom"), true) &&
+                t.checkExpect(this.los3.isSortedHelper(new StringLengthCompGen(), "zetaaaa"), 
+                        false);
+    }
+
+    // tests the isSorted(IStringsCompare compare) for both function objects
+    boolean testIsSorted(Tester t) {
+        return t.checkExpect(this.mtList.isSorted(new StringLexCompGen()), true) &&
+                t.checkExpect(this.mary.isSorted(new StringLexCompGen()), false) &&
+                t.checkExpect(this.maryLexSorted.isSorted(new StringLexCompGen()), true) &&
+
+                t.checkExpect(this.mtList.isSorted(new StringLengthCompGen()), true) &&
+                t.checkExpect(this.mary.isSorted(new StringLengthCompGen()), false) &&
+                t.checkExpect(this.maryLenSorted.isSorted(new StringLengthCompGen()), true);
+    }
+
+    // tests the sameList(ILoString los) method
+    boolean testSameList(Tester t) {
+        return t.checkExpect(this.mtList.sameList(this.mtList), true) &&
+                t.checkExpect(this.mtList.sameList(this.los1), false) &&
+                t.checkExpect(this.los1.sameList(this.mtList), false) &&
+                t.checkExpect(this.los3.sameList(this.los3), true) &&
+                t.checkExpect(this.los3.sameList(this.mary), false);
+    }
+
+
+    // tests the sameMtList(MtLoString los) method
+    boolean testSameMtList(Tester t) {
+        return t.checkExpect(this.mtList.sameList(this.mtList), true) &&
+                t.checkExpect(this.los1.sameList(this.mtList), false);
+    }
+
+
+    // tests the sameConsList(ConsLoString los) method
+    boolean testSameConsList(Tester t) {
+        return t.checkExpect(this.mtList.sameConsList(this.los1), false) &&
+                t.checkExpect(this.los1.sameConsList(this.los2), false) &&
+                t.checkExpect(this.los2.sameConsList(this.los2), true);
+    }
+
+
+}
